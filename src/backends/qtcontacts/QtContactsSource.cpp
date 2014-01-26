@@ -28,13 +28,21 @@
 #include <QDebug>
 
 #include <QContact>
+#ifndef QTCONTACTS_VERSION
+#include <QtContactsVersion>
+#endif
 #include <QContactManager>
 #include <QContactFetchRequest>
 #include <QContactRemoveRequest>
 #include <QContactSaveRequest>
 #include <QContactTimestamp>
+#include <QContactIntersectionFilter>
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QContactIdFilter>
+#else
 #include <QContactLocalIdFilter>
 #include <QContactThumbnail>
+#endif
 #include <QContactAvatar>
 #include <QContactSyncTarget>
 #include <QContactDetailFilter>
@@ -57,7 +65,31 @@
 #include <syncevo/declarations.h>
 SE_BEGIN_CXX
 
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+using namespace QtContacts;
+using namespace QtVersit;
+#else
 using namespace QtMobility;
+#endif
+
+#ifdef ENABLE_MAEMO
+// on Harmattan (Qt 4), the SyncTarget should be "addressbook"
+#define USE_SYNCTARGET "addressbook"
+#endif
+#ifdef ENABLE_SAILFISH
+// on Sailfish (Qt 5), the SyncTarget should be "local"
+#define USE_SYNCTARGET "local"
+#endif
+
+/* As far as I can tell, as of QtContacts 5.0, custom details
+ * are no longer possible, thus making the X-SYNCEVO-QTCONTACTS
+ * handling below obsolete. (Even if we wanted the ability to recover
+ * information from old X-SYNCEVO-QTCONTACTS fields, it would be
+ * difficult because QtContacts no longer lets you use strings as
+ * references to fields, and thus we would have to go via QVersit
+ * or something, which is probably more trouble than it's worth.)
+ *  - Ove */
+#if QTCONTACTS_VERSION < QT_VERSION_CHECK(5, 0, 0)
 
 /**
  * This handler represents QContactDetails which have no
@@ -295,6 +327,7 @@ public:
     }
 };
 
+#endif // QTCONTACTS_VERSION < QT_VERSION_CHECK(5, 0, 0)
 
 
 class QtContactsData
@@ -316,6 +349,21 @@ public:
         }
     }
 
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    static QList<QContactId> createContactList(const string &uid)
+    {
+        QList<QContactId> list;
+        list.append(QContactId::fromString(QString::fromLocal8Bit(uid.c_str())));
+        return list;
+    }
+
+    static QContactIdFilter createIdFilter(const string &uid)
+    {
+        QContactIdFilter filter;
+        filter.setIds(createContactList(uid));
+        return filter;
+    }
+#else
     static QList<QContactLocalId> createContactList(const string &uid)
     {
         QList<QContactLocalId> list;
@@ -323,17 +371,68 @@ public:
         return list;
     }
 
-    static QContactLocalIdFilter createFilter(const string &uid)
+    static QContactLocalIdFilter createIdFilter(const string &uid)
     {
         QContactLocalIdFilter filter;
         filter.setIds(createContactList(uid));
         return filter;
     }
+#endif
+
+#ifdef USE_SYNCTARGET
+    static QContactDetailFilter createSyncFilter()
+    {
+        // only sync contacts from addressbook, not from Telepathy or wherever
+        QContactDetailFilter filter;
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        filter.setDetailType(QContactSyncTarget::Type, QContactSyncTarget::FieldSyncTarget);
+#else
+        filter.setDetailDefinitionName(QContactSyncTarget::DefinitionName, QContactSyncTarget::FieldSyncTarget);
+#endif
+        filter.setValue(USE_SYNCTARGET);
+        filter.setMatchFlags(QContactFilter::MatchExactly);
+        return filter;
+    }
+
+    static QContactIntersectionFilter createIntersectionFilter(const QContactFilter& filter1, const QContactFilter& filter2)
+    {
+        QContactIntersectionFilter filter;
+        filter.setFilters(QList<QContactFilter>() << filter1 << filter2);
+        return filter;
+    }
+
+    static QContactIntersectionFilter createFilter(const string &uid)
+    {
+        // need to use the same sync filter as when the UID was retrieved,
+        // otherwise the backend may default to a different filter
+        // (on Sailfish, only contacts with synctarget "aggregate"),
+        // resulting in us getting nothing back.
+        return createIntersectionFilter(createIdFilter(uid),
+                                        createSyncFilter());
+    }
+#else
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    static QContactIdFilter createFilter(const string &uid)
+    {
+        return createIdFilter(uid);
+    }
+#else
+    static QContactLocalIdFilter createFilter(const string &uid)
+    {
+        return createIdFilter(uid);
+    }
+#endif
+#endif
 
     static string getLUID(const QContact &contact)
     {
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        QContactId id = contact.id();
+        return id.toString().toLocal8Bit().constData();
+#else
         QContactLocalId id = contact.localId();
         return StringPrintf("%u", id);
+#endif
     }
 
     static string getRev(const QContact &contact)
@@ -445,25 +544,29 @@ QtContactsSource::Databases QtContactsSource::getDatabases()
 void QtContactsSource::listAllItems(RevisionMap_t &revisions)
 {
 #ifdef ENABLE_MAEMO
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QContactId self_id = m_data->m_manager->selfContactId();
+#else
     QContactLocalId self_id = m_data->m_manager->selfContactId();
+#endif
 #endif
 
     QContactFetchRequest fetch;
     fetch.setManager(m_data->m_manager.get());
 
-#ifdef ENABLE_MAEMO
+#ifdef USE_SYNCTARGET
     // only sync contacts from addressbook, not from Telepathy or wherever
-    QContactDetailFilter filter;
-    filter.setDetailDefinitionName(QContactSyncTarget::DefinitionName, QContactSyncTarget::FieldSyncTarget);
-    filter.setValue("addressbook");
-    filter.setMatchFlags(QContactFilter::MatchExactly);
-    fetch.setFilter(filter);
+    fetch.setFilter(QtContactsData::createSyncFilter());
 #endif
 
     // only need ID and time stamps
     QContactFetchHint hint;
     hint.setOptimizationHints(QContactFetchHint::OptimizationHints(QContactFetchHint::NoRelationships|QContactFetchHint::NoBinaryBlobs));
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    hint.setDetailTypesHint(QList<QContactDetail::DetailType>() << QContactTimestamp::Type);
+#else
     hint.setDetailDefinitionsHint(QStringList() << QContactTimestamp::DefinitionName);
+#endif
     fetch.setFetchHint(hint);
 
     fetch.start();
@@ -471,10 +574,16 @@ void QtContactsSource::listAllItems(RevisionMap_t &revisions)
     m_data->checkError("read all items", fetch);
     foreach (const QContact &contact, fetch.contacts()) {
 #ifdef ENABLE_MAEMO
-        if (contact.localId() == self_id) {
-            // Do not synchronize "self" contact
+        // Do not synchronize "self" contact
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        if (contact.id() == self_id) {
             continue;
         }
+#else
+        if (contact.localId() == self_id) {
+            continue;
+        }
+#endif
 #endif
 
         string revision = QtContactsData::getRev(contact);
@@ -504,6 +613,7 @@ void QtContactsSource::readItem(const string &uid, std::string &item, bool raw)
     QList<QContact> contacts = fetch.contacts();
     for (int i = 0; i < contacts.size(); ++i) {
         QContact &contact = contacts[i];
+#if QTCONTACTS_VERSION < QT_VERSION_CHECK(5, 0, 0)
         const QContactAvatar avatar = contact.detail(QContactAvatar::DefinitionName);
         const QContactThumbnail thumb = contact.detail(QContactThumbnail::DefinitionName);
         if (!avatar.isEmpty() && thumb.isEmpty()) {
@@ -512,6 +622,7 @@ void QtContactsSource::readItem(const string &uid, std::string &item, bool raw)
             thumbnail.setThumbnail(image);
             contact.saveDetail(&thumbnail);
         }
+#endif
 
 //        foreach (const QContactSyncTarget &target, contact.details<QContactSyncTarget>()) {
 //            std::cout << " Sync Target: " << target.syncTarget().toUtf8().data() << std::endl;
@@ -524,9 +635,11 @@ void QtContactsSource::readItem(const string &uid, std::string &item, bool raw)
         profiles << QVersitContactHandlerFactory::ProfileBackup;
     }
 #endif
-    SyncEvoQtContactsHandler handler;
     QVersitContactExporter exporter(profiles);
+#if QTCONTACTS_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    SyncEvoQtContactsHandler handler;
     exporter.setDetailHandler(&handler);
+#endif
     if (!exporter.exportContacts(contacts, QVersitDocument::VCard30Type)) {
         throwError(SE_HERE, uid + ": encoding as vCard 3.0 failed");
     }
@@ -555,9 +668,11 @@ TrackingSyncSource::InsertItemResult QtContactsSource::insertItem(const string &
         profiles << QVersitContactHandlerFactory::ProfileBackup;
     }
 #endif
-    SyncEvoQtContactsHandler handler(m_data->m_manager->detailDefinitions());
     QVersitContactImporter importer(profiles);
+#if QTCONTACTS_VERSION < QT_VERSION_CHECK(5, 0, 0)
+    SyncEvoQtContactsHandler handler(m_data->m_manager->detailDefinitions());
     importer.setPropertyHandler(&handler);
+#endif
     if (!importer.importDocuments(reader.results())) {
         throwError(SE_HERE, "importing vCard failed");
     }
@@ -566,11 +681,25 @@ TrackingSyncSource::InsertItemResult QtContactsSource::insertItem(const string &
     QContact &contact = contacts.first();
 
     if (!uid.empty()) {
-        QContactId id;
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        QContactId id = QContactId::fromString(QString::fromLocal8Bit(uid.c_str()));
+#else
+        QContactLocalId id;
         id.setManagerUri(m_data->m_managerURI);
         id.setLocalId(atoi(uid.c_str()));
+#endif
         contact.setId(id);
     }
+
+#ifdef USE_SYNCTARGET
+    // The SailfishOS backend requires the SyncTarget to be set whenever updating
+    // an existing entry. (It defaults to "local" only if creating a new entry.)
+    // Since we're filtering on a particular SyncTarget anyway, we don't have to read
+    // the old contact to find the old SyncTarget, just set the one we filter on.
+    QContactSyncTarget syncTarget;
+    syncTarget.setSyncTarget(USE_SYNCTARGET);
+    contact.saveDetail(&syncTarget);
+#endif
 
     QContactSaveRequest save;
     save.setManager(m_data->m_manager.get());
@@ -582,6 +711,7 @@ TrackingSyncSource::InsertItemResult QtContactsSource::insertItem(const string &
     QList<QContact> savedContacts = save.contacts();
     QContact &savedContact = savedContacts.first();
 
+#if QTCONTACTS_VERSION < QT_VERSION_CHECK(5, 0, 0)
     // Saving is not guaranteed to update the time stamp (BMC #5710).
     // Need to read again.
     QContactFetchRequest fetch;
@@ -594,6 +724,9 @@ TrackingSyncSource::InsertItemResult QtContactsSource::insertItem(const string &
     fetch.start();
     fetch.waitForFinished();
     QContact &finalContact = fetch.contacts().first();
+#else
+    QContact &finalContact = savedContact;
+#endif
 
     return InsertItemResult(QtContactsData::getLUID(savedContact),
                             QtContactsData::getRev(finalContact),
@@ -627,7 +760,11 @@ std::string QtContactsSource::getDescription(const string &luid)
             return "";
         }
         QContact contact = fetch.contacts().first();
+#if QTCONTACTS_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+        string descr = contact.detail<QContactDisplayLabel>().label().toLocal8Bit().constData();
+#else
         string descr = contact.displayLabel().toLocal8Bit().constData();
+#endif
         return descr;
     } catch (...) {
         // Instead of failing we log the error and ask

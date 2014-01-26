@@ -19,4 +19,4 @@ src_backends_qtcontacts_syncqtcontacts_la_DEPENDENCIES = src/syncevo/libsyncevol
 # Allow Qt to set some compile flags, but not the ones normally set via configure.
 # In particular -W is not compatible with the SyncEvolution header files (we have
 # unused parameters in some inline functions).
-src_backends_qtcontacts_syncqtcontacts_la_CXXFLAGS = $(SYNCEVOLUTION_CXXFLAGS) $(filter-out -O2 -g -W -Wall, $(QT_CXXFLAGS)) $(SYNCEVO_WFLAGS)
+src_backends_qtcontacts_syncqtcontacts_la_CXXFLAGS = $(SYNCEVOLUTION_CXXFLAGS) $(QT_CONTACTS_CFLAGS) $(filter-out -O2 -g -W -Wall, $(QT_CXXFLAGS)) $(SYNCEVO_WFLAGS)
