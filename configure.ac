@@ -181,16 +181,19 @@ AC_ARG_ENABLE(developer-mode,
                              [The dynamic loadble backend libraries is loaded from current build directory instead of the standard library path]),
               enable_developer_mode="$enableval", enable_developer_mode="no")
 
-# Maemo hacks:
-# - wrap e_book_from_string() to fix invalid parameter
-# - don't use UTF-8 encoding in Perl script
 AC_ARG_ENABLE(maemo,
               AS_HELP_STRING([--enable-maemo],
-                             [enables some hacks which work around problems with the Maemo 2.0 until at least 3.0 EDS-Dbus]),
+                             [enables some hacks which work around problems with Maemo]),
               [AC_DEFINE(ENABLE_MAEMO, 1, [enable Maemo hacks])
                DEVICE_TYPE=Maemo
                MODIFY_SYNCCOMPARE='-e "s/use encoding/#use encoding/;" -e "s/:utf8//;"'])
 AC_SUBST(MODIFY_SYNCCOMPARE)
+
+AC_ARG_ENABLE(sailfish,
+              AS_HELP_STRING([--enable-sailfish],
+                             [enables some hacks which work around problems with SailfishOS]),
+              [AC_DEFINE(ENABLE_SAILFISH, 1, [enable Sailfish hacks])
+               DEVICE_TYPE=Sailfish])
 
 AC_CHECK_HEADERS(signal.h dlfcn.h)
 
