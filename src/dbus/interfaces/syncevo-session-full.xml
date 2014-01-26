@@ -345,8 +345,8 @@
       </arg>
       <arg type="a{ss}" name="vars" direction="in">
         <doc:doc><doc:summary>Environment variables in clients</doc:summary></doc:doc>
-        <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="QStringMap"/>
       </arg>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In1" value="QStringMap"/>
     </method>
 
     <signal name="StatusChanged">

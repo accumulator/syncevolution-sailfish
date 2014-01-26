@@ -102,8 +102,8 @@
             "URL" - the URL for an HTTP POST.
           </doc:summary>
         </doc:doc>
-        <annotation name="com.trolltech.QtDBus.QtTypeName.In2" value="QStringMap"/>
       </arg>      
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In2" value="QStringMap"/>
 
       <arg type="b" name="final">
         <doc:doc>

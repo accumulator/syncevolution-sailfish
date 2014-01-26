@@ -129,8 +129,8 @@
             "system" - some plain text information about system libraries,
             "backends" - available backend libraries
         </doc:summary></doc:doc>
-        <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="QStringMap"/>
       </arg>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.Out0" value="QStringMap"/>
     </method>  
 
     <method name="Attach">
@@ -585,8 +585,8 @@
             version of the transport entity.
           </doc:summary>
         </doc:doc>
-        <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="QStringMap"/>
       </arg>
+      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="QStringMap"/>
       <arg type="b" name="must_authenticate" direction="in">
         <doc:doc>
           <doc:summary>
