@@ -43,6 +43,7 @@ static SyncSource *createSource(const SyncSourceParams &params)
         }
     }
 
+#ifndef ENABLE_SAILFISH // don't sync tasks and todos on Sailfish yet.
     isMe = sourceType.m_backend == "mkcal-todos";
     maybeMe = sourceType.m_backend == "todo";
 
@@ -74,6 +75,7 @@ static SyncSource *createSource(const SyncSourceParams &params)
                 isMe ? RegisterSyncSource::InactiveSource(params) : NULL;
         }
     }
+#endif
 
     return NULL;
 }
