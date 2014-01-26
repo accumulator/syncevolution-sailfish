@@ -6,12 +6,13 @@ dnl Invoke autogen.sh to produce a configure script.
 SE_ARG_ENABLE_BACKEND(kcalextended,
                       kcalextended,
                       [AS_HELP_STRING([--enable-kcalextended],
-                                      [enable support for Maemo's KCalExtended storage])],
+                                      [enable support for MeeGo's KCalExtended storage])],
                       [enable_kcalextended="$enableval"],
                       [enable_kcalextended="no"]
                      )
 
 if test "$enable_kcalextended" = "yes"; then
         AC_DEFINE(ENABLE_KCALEXTENDED, 1, [KCalExtended available])
-        PKG_CHECK_MODULES(KCALEXTENDED, libmkcal libkcalcoren)
+        PKG_CHECK_MODULES(KCALEXTENDED, libmkcal-qt5 libkcalcoren-qt5 Qt5Core,,
+          [PKG_CHECK_MODULES(KCALEXTENDED, libmkcal libkcalcoren)])
 fi
