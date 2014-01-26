@@ -17,7 +17,7 @@
  * 02110-1301  USA
  */
 
-#include "dbustypes.h"
+#include "syncevo-qt-dbustypes.h"
 
 
 // Marshall the SyncDatabase data into a D-BUS argument

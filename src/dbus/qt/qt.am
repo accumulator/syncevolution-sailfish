@@ -5,7 +5,7 @@ src_dbus_qt_libsyncevolution_qt_dbus_libraries = \
 
 lib_LTLIBRARIES += $(src_dbus_qt_libsyncevolution_qt_dbus_libraries)
 
-src_dbus_qt_libsyncevolution_qt_dbus_headers = src/dbus/qt/dbustypes.h
+src_dbus_qt_libsyncevolution_qt_dbus_headers = src/dbus/qt/syncevo-qt-dbustypes.h
 
 
 src_dbus_qt_libsyncevolution_qt_dbus_includedir = $(includedir)/syncevolution-qt-dbus
@@ -15,7 +15,7 @@ nodist_src_dbus_qt_libsyncevolution_qt_dbus_include_HEADERS = \
 
 dist_src_dbus_qt_libsyncevolution_qt_dbus_la_SOURCES = \
   $(src_dbus_qt_libsyncevolution_qt_dbus_headers) \
-  src/dbus/qt/dbustypes.cpp
+  src/dbus/qt/syncevo-qt-dbustypes.cpp
 
 nodist_src_dbus_qt_libsyncevolution_qt_dbus_la_SOURCES = \
   $(src_dbus_qt_built_sources)
@@ -69,7 +69,7 @@ src/dbus/qt/syncevo-%-full.cpp src/dbus/qt/syncevo-%-full.h: src/dbus/qt/stamp-%
 
 # work around #ifndef SYNCEVO-SERVER-FULL_H_1305547804 bug
 src/dbus/qt/stamp-%: $(top_srcdir)/src/dbus/interfaces/syncevo-%-full.xml
-	$(AM_V_at)@QDBUSXML_TO_CPP@ -p src/dbus/qt/syncevo-$*-full -i src/dbus/qt/dbustypes.h $< \
+	$(AM_V_at)@QDBUSXML_TO_CPP@ -p src/dbus/qt/syncevo-$*-full -i syncevo-qt-dbustypes.h $< \
 	&& perl -pi -e 's/SYNCEVO-(\w*)-FULL_H/SYNCEVO_$$1_FULL_H/' src/dbus/qt/syncevo-$*-full.* \
 	&& echo 'timestamp' >$@
 
