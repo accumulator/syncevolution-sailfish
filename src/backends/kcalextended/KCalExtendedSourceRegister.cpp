@@ -90,11 +90,9 @@ static RegisterSyncSource registerMe("KCalExtended",
                                      "   inside the default calendar storage. If it starts\n" 
                                      "   with the 'SyncEvolution_Test_' prefix, it will be\n"
                                      "   created as needed, otherwise it must exist.\n"
-#ifdef ENABLE_MAEMO
                                      "   If it starts with the 'uid:' prefix, the specified\n"
                                      "   calendar in the default SQLite storage file will\n"
                                      "   be used. It must exist.\n"
-#endif
                                      "   If it starts with the 'file://' prefix, the default\n"
                                      "   calendar in the specified SQLite storage file will\n"
                                      "   created (if needed) and used.\n"

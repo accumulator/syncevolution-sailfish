@@ -39,6 +39,12 @@
 #include <syncevo/declarations.h>
 SE_BEGIN_CXX
 
+#ifdef ENABLE_MAEMO
+// on Harmattan, notes use a specific database:
+//   Notes (uid:66666666-7777-8888-9999-000000000000)
+#define MEMO_NOTEBOOK "66666666-7777-8888-9999-000000000000"
+#endif
+
 /**
  * All std::string and plain C strings in SyncEvolution are in UTF-8.
  * QString must be told about that explicitly.
@@ -263,13 +269,11 @@ void KCalExtendedSource::open()
         if (!m_data->m_storage->open()) {
             throwError(SE_HERE, "failed to open storage");
         }
-#ifdef ENABLE_MAEMO
+#ifdef MEMO_NOTEBOOK
         mKCal::Notebook::Ptr defaultNotebook;
-        // For notes, we need a different default database:
-        //   Notes (uid:66666666-7777-8888-9999-000000000000)
         if (databaseID.empty() && m_type == Journal)
         {
-            defaultNotebook = m_data->m_storage->notebook("66666666-7777-8888-9999-000000000000");
+            defaultNotebook = m_data->m_storage->notebook(MEMO_NOTEBOOK);
         }
         else
         {
@@ -282,7 +286,6 @@ void KCalExtendedSource::open()
             throwError(SE_HERE, "no default Notebook");
         }
         m_data->m_notebookUID = defaultNotebook->uid();
-#ifdef ENABLE_MAEMO
     } else if (boost::starts_with(databaseID, "uid:")) {
         // if databaseID has a "uid:" prefix, open existing notebook with given ID in default storage
         m_data->m_storage = mKCal::ExtendedCalendar::defaultStorage(m_data->m_calendar);
@@ -296,7 +299,6 @@ void KCalExtendedSource::open()
             throwError(SE_HERE, string("no such notebook with UID \"") + uid.toStdString() + string("\" in default storage"));
         }
         m_data->m_notebookUID = notebook->uid();
-#endif
     } else {
         // use databaseID as notebook name to search for an existing notebook
         // if found use it, otherwise:
@@ -389,21 +391,16 @@ KCalExtendedSource::Databases KCalExtendedSource::getDatabases()
     mKCal::Notebook::List notebookList = m_data->m_storage->notebooks();
     mKCal::Notebook::List::Iterator it;
     for ( it = notebookList.begin(); it != notebookList.end(); ++it ) {
-#ifdef ENABLE_MAEMO
         string name = (*it)->name().toStdString();
         string uid = (*it)->uid().toStdString();
-        // For notes, we need a different default database:
-        //   Notes (uid:66666666-7777-8888-9999-000000000000)
+#ifdef MEMO_NOTEBOOK
         bool isDefault = (m_type != Journal) ?
                          (*it)->isDefault() :
-                         (uid == "66666666-7777-8888-9999-000000000000");
-        result.push_back(Database( name, "uid:" + uid, isDefault ));
+                         (uid == MEMO_NOTEBOOK);
 #else
         bool isDefault = (*it)->isDefault();
-        result.push_back(Database( (*it)->name().toStdString(), 
-                                   (m_data->m_storage).staticCast<mKCal::SqliteStorage>()->databaseName().toStdString(), 
-                                   isDefault));
 #endif
+        result.push_back(Database( name, "uid:" + uid, isDefault ));
     }
     m_data->m_storage->close();
     m_data->m_calendar->close();
