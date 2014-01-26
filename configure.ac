@@ -954,15 +954,17 @@ AC_ARG_ENABLE(qt-dbus,
               enable_qt_dbus="$enableval", enable_qt_dbus="no")
 
 if test "$enable_qt_dbus" = "yes"; then
+        PKG_CHECK_MODULES(QT_DBUS, Qt5DBus, [QT_DBUS_PKG=Qt5DBus],
+            [PKG_CHECK_MODULES(QT_DBUS, QtDBus, [QT_DBUS_PKG=QtDBus])])
         AC_DEFINE(ENABLE_QT_DBUS, 1, [Qt D-Bus bindings available])
-        need_qt_modules="$need_qt_modules +dbus"
+        need_qt_modules="$need_qt_modules +core"
         AC_PATH_PROG([QDBUSXML_TO_CPP], [qdbusxml2cpp], [no])
         test "x$QDBUSXML_TO_CPP" != 'xno' || AC_MSG_ERROR([--enable-qt-dbus requires qdbusxml2cpp, which was not found])
 fi
 
 AM_CONDITIONAL([ENABLE_QT_DBUS], [test "$enable_qt_dbus" = "yes"])
 
-AC_SUBST(QT_DBUS_LIBS)
+AC_SUBST(QT_DBUS_PKG)
 AC_CONFIG_FILES([src/dbus/qt/syncevolution-qt-dbus.pc])
 
 dnl -*- mode: Autoconf; -*-

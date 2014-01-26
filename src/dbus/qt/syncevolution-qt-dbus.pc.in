@@ -7,5 +7,5 @@ Name: syncevolution-qt-dbus
 Description: SyncEvolution Qt D-Bus bindings
 Version: @VERSION@
 Cflags: -I${includedir}
-Requires: QtDBus
+Requires: @QT_DBUS_PKG@
 Libs: -L${libdir} -lsyncevolution-qt-dbus
