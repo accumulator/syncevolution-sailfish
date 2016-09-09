@@ -1,0 +1,5 @@
+#!/bin/sh
+SPECFILE=sailfish-syncevolution.spec
+VERSION=`sed -n 's/Version: \(.*\)/\1/p' $SPECFILE`
+RELEASE=`sed -n 's/Release: \(.*\)/\1/p' $SPECFILE`
+rpmbuild -bb $SPECFILE

@@ -1,0 +1,19 @@
+#!/bin/sh
+SPECFILE=sailfish-syncevolution.spec
+VERSION=`sed -n 's/Version: \(.*\)/\1/p' $SPECFILE`
+RELEASE=`sed -n 's/Release: \(.*\)/\1/p' $SPECFILE`
+HOSTDIR=`sed -n 's/%global hostdir \(.*\)/\1/p' $SPECFILE`
+NEONDIR=`sed -n 's/%global neondir \(.*\)/\1/p' $SPECFILE`
+
+if test -f config.h; then
+  echo "Please clean up the source directory"
+  exit 1
+fi
+
+# Since the rpm build environment doesn't have dpatch,
+# make sure the patched version is put into the .tar.gz
+(cd $NEONDIR && debian/rules patch)
+
+# Finally, pack the sources
+echo Creating syncevolution-$VERSION-$RELEASE.tar.gz ...
+cd .. && tar czf ~/rpmbuild/SOURCES/syncevolution-$VERSION-$RELEASE.tar.gz syncevolution
