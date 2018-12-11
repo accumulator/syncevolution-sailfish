@@ -44,11 +44,11 @@
 # --- #
 
 %.moc.cpp: %.hpp
-	$(AM_V_GEN)$(MOC) $(QT_CPPFLAGS) $(EXTRA_CPPFLAGS) $< -o $@
+	$(AM_V_GEN)$(MOC) $(EXTRA_CPPFLAGS) $< -o $@
 %.moc.cpp: %.hh
-	$(AM_V_GEN)$(MOC) $(QT_CPPFLAGS) $(EXTRA_CPPFLAGS) $< -o $@
+	$(AM_V_GEN)$(MOC) $(EXTRA_CPPFLAGS) $< -o $@
 %.moc.cpp: %.h
-	$(AM_V_GEN)$(MOC) $(QT_CPPFLAGS) $(EXTRA_CPPFLAGS) $< -o $@
+	$(AM_V_GEN)$(MOC) $(EXTRA_CPPFLAGS) $< -o $@
 
 %moc.cc: %.hpp
 	$(AM_V_GEN)$(MOC) $(QT_CPPFLAGS) $(EXTRA_CPPFLAGS) $< -o $@
