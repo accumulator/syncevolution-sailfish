@@ -1,6 +1,6 @@
 Name: syncevolution
 Summary: SyncEvolution - a SyncML and CalDAV/CardDAV client
-Version: 1.3.99.7
+Version: 1.5.3
 Release: 1
 License: GPL
 Source: syncevolution-%{version}-%{release}.tar.gz
@@ -8,6 +8,7 @@ BuildRequires: gettext glib2-devel boost-devel pcre-devel cppunit-devel
 BuildRequires: libcurl-devel sqlite-devel libxml2-devel openssl-devel zlib-devel
 BuildRequires: mkcal-qt5-devel kcalcore-qt5-devel libical-devel
 BuildRequires: libaccounts-glib-devel libsignon-glib-devel dbus-glib-devel
+BuildRequires: cppunit libical intltool libtool
 
 %description
 SyncEvolution allows you to sync your contacts and calendar with SyncML
@@ -48,6 +49,7 @@ NEON_LIBS="%{neon_libs}" \
  --enable-qtcontacts --enable-kcalextended \
  --disable-bluetooth --enable-dav --with-synthesis-src=libsynthesis \
  --enable-dbus-service --enable-qt-dbus \
+ --disable-signon --disable-uoa \
  --prefix=/usr --docdir=/usr/share/syncevolution/doc --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info \
  --sysconfdir=/etc && make
 
@@ -106,6 +108,7 @@ install qt-ui/sailfish/syncevolution.png %{buildroot}/usr/share/icons/hicolor/86
 /usr/libexec/syncevo-dbus-server-startup.sh
 %defattr(644, root, root, 755)
 /usr/share/dbus-1/services/org.syncevolution.service
+/usr/lib/systemd/user/syncevo-dbus-server.service
 # The following files are only generated with --enable-qt-dbus
 /usr/lib/libsyncevolution-qt-dbus.so.0
 /usr/lib/libsyncevolution-qt-dbus.so.0.*
