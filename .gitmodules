@@ -1,0 +1,3 @@
+[submodule "libsynthesis"]
+	path = libsynthesis
+	url = git://anongit.freedesktop.org/SyncEvolution/libsynthesis
